@@ -1,11 +1,3 @@
-#![warn(
-    // clippy::all,
-    clippy::restriction,
-    // clippy::pedantic,
-    // clippy::nursery,
-    // clippy::cargo,
-)]
-
 mod cli;
 mod config;
 mod providers;
@@ -32,7 +24,7 @@ fn run(cli: Cli, mut config: Config) -> anyhow::Result<()> {
             let weather = provider_api.get_weather(address, date)?;
             weather.print();
 
-            Ok(())
+            return Ok(());
         }
     }
 }
