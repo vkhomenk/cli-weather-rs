@@ -85,8 +85,8 @@ impl FromStr for ProviderKind {
 }
 
 fn parse_date(date: &str) -> anyhow::Result<NaiveDate> {
-    let current_date = Utc::now().naive_utc();
-    let full_date = format!("{}.{}", date, current_date.year());
+    let current_year = Utc::now().naive_utc().year();
+    let full_date = format!("{}.{}", date, current_year);
 
     NaiveDate::parse_from_str(&full_date, "%d.%m.%Y")
         .map_err(|_| Error::msg("Accepted date format: day.month"))

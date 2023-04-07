@@ -24,7 +24,7 @@ fn run(cli: Cli, mut config: Config) -> anyhow::Result<()> {
             let weather = provider_api.get_weather(address, date)?;
             weather.print();
 
-            return Ok(());
+            Ok(())
         }
     }
 }

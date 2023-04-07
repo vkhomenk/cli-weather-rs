@@ -1,11 +1,12 @@
 mod accu_weather;
 mod open_weather;
+use accu_weather::AccuWeather;
+use open_weather::OpenWeather;
+
 use crate::cli::ProviderKind;
 use crate::config::Config;
-use accu_weather::AccuWeather;
 use anyhow::Result;
 use chrono::NaiveDate;
-use open_weather::OpenWeather;
 use reqwest::blocking::Client;
 use std::time::Duration;
 
@@ -33,9 +34,10 @@ impl Weather {
 pub trait WeatherProvider {
     fn get_weather(&self, address: String, date: Option<NaiveDate>) -> Result<Weather>;
 }
-
 pub struct ProviderHandle {
-    provider: Box<dyn WeatherProvider>,
+    kind: ProviderKind,
+    api_key: String,
+    client: Client,
 }
 
 impl ProviderHandle {
@@ -44,21 +46,23 @@ impl ProviderHandle {
             Some(kind) => kind,
             None => config.default_provider()?.parse()?,
         };
-        let api_key = config.get_key(&kind.to_string())?;
+        let api_key = config.get_api_key(&kind.to_string())?.clone();
         let client = Client::builder()
             .user_agent(APP_USER_AGENT)
             .timeout(Duration::from_secs(TIMEOUT_SECONDS))
             .build()?;
 
         Ok(Self {
-            provider: match kind {
-                ProviderKind::Open => Box::new(OpenWeather::new(api_key, client)),
-                ProviderKind::Accu => Box::new(AccuWeather::new(api_key, client)),
-            },
+            kind,
+            api_key,
+            client,
         })
     }
 
-    pub fn get_weather(&self, address: String, date: Option<NaiveDate>) -> Result<Weather> {
-        self.provider.get_weather(address, date)
+    pub fn get_weather(self, address: String, date: Option<NaiveDate>) -> Result<Weather> {
+        match self.kind {
+            ProviderKind::Open => OpenWeather::new(self).get_weather(address, date),
+            ProviderKind::Accu => AccuWeather::new(self).get_weather(address, date),
+        }
     }
 }

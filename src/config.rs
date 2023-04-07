@@ -26,22 +26,12 @@ impl Config {
         specified_api_key: Option<String>,
         set_default: bool,
     ) -> Result<()> {
-        let select_provider = || {
-            let supported_providers: Vec<_> = ProviderKind::iter().map(|p| p.full_name()).collect();
-
-            Select::new()
-                .with_prompt("Select provider to configure")
-                .items(&supported_providers)
-                .default(0)
-                .interact()
-                .ok()
-                .and_then(|index| ProviderKind::iter().nth(index))
+        let provider = if let Some(name) = specified_provider {
+            name.to_string()
+        } else {
+            let supported: Vec<_> = ProviderKind::iter().map(|p| p.full_name()).collect();
+            select_provider(supported, "Select provider to configure")?
         };
-
-        let provider = specified_provider
-            .or_else(select_provider)
-            .ok_or(Error::msg("Unknown provider"))?
-            .to_string();
 
         let api_key = match specified_api_key {
             Some(key) => key,
@@ -50,14 +40,13 @@ impl Config {
                 .interact_text()?,
         };
 
-        self.providers.remove(&provider);
-        self.providers.insert(provider.clone(), api_key);
-
-        let no_other_provider = !self.providers.keys().any(|existing| provider != **existing);
-
-        if set_default || no_other_provider {
-            self.default = Some(provider);
+        let no_other_provider = || !self.providers.keys().any(|existing| provider != **existing);
+        if set_default || no_other_provider() {
+            self.default = Some(provider.clone());
         }
+
+        self.providers.remove(&provider);
+        self.providers.insert(provider, api_key);
 
         self.save()
     }
@@ -66,36 +55,30 @@ impl Config {
         self.default_provider()?;
 
         let configured_provider = if let Some(provider) = specified_name {
-            self.get_key(&provider)?;
+            self.get_api_key(&provider)?;
             provider
         } else {
-            let configured_providers: Vec<String> = ProviderKind::iter()
+            let configured: Vec<_> = ProviderKind::iter()
                 .map(|p| p.to_string())
-                .filter(|provider| self.providers.contains_key(provider))
+                .filter(|p| self.providers.contains_key(p))
                 .collect();
-            let selected = Select::new()
-                .with_prompt("Select provider to use by default")
-                .items(&configured_providers)
-                .default(0)
-                .interact()?;
 
-            configured_providers[selected].clone()
+            select_provider(configured, "Select provider to use by default")?
         };
 
         self.default = Some(configured_provider);
         self.save()
     }
 
-    pub fn get_key(&self, provider: &str) -> Result<String> {
+    pub fn get_api_key(&self, provider: &str) -> Result<&String> {
         self.providers
             .get(provider)
-            .cloned()
             .ok_or(Error::msg("This provider is not configured"))
     }
 
-    pub fn default_provider(&self) -> Result<String> {
+    pub fn default_provider(&self) -> Result<&String> {
         self.default
-            .clone()
+            .as_ref()
             .ok_or(Error::msg("No providers configured"))
     }
 
@@ -103,4 +86,18 @@ impl Config {
         let contents = serde_json::to_string_pretty(&self)?;
         write(CONFIG_FILE_PATH, contents).map_err(Error::msg)
     }
+}
+
+/// Prompts to select provider with arrow keys
+fn select_provider(options: Vec<String>, prompt: &str) -> Result<String> {
+    let index = Select::new()
+        .with_prompt(prompt)
+        .items(&options)
+        .default(0)
+        .interact()?;
+
+    Ok(options
+        .into_iter()
+        .nth(index)
+        .expect("Selection out of bounds"))
 }

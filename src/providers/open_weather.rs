@@ -1,4 +1,4 @@
-use super::{Weather, WeatherProvider};
+use super::{ProviderHandle, Weather, WeatherProvider};
 use anyhow::{bail, Error, Result};
 use chrono::NaiveDate;
 use reqwest::blocking::Client;
@@ -11,8 +11,11 @@ pub struct OpenWeather {
 }
 
 impl OpenWeather {
-    pub fn new(api_key: String, client: Client) -> Self {
-        Self { api_key, client }
+    pub fn new(config: ProviderHandle) -> Self {
+        Self {
+            api_key: config.api_key,
+            client: config.client,
+        }
     }
 }
 
@@ -32,11 +35,10 @@ impl WeatherProvider for OpenWeather {
         let rspns: ResponseData =
             serde_json::from_value(rspns).map_err(|_| Error::msg("Undefined weather format"))?;
 
-        let forecast_list = rspns.list;
-
         let wthr_that_day: Vec<Forecast> = match &date {
-            None => forecast_list.into_iter().take(1).collect(),
-            Some(day) => forecast_list
+            None => rspns.list.into_iter().take(1).collect(),
+            Some(day) => rspns
+                .list
                 .into_iter()
                 .filter(|forecast| forecast.dt_txt.starts_with(&day.to_string()))
                 .collect(),
@@ -46,13 +48,10 @@ impl WeatherProvider for OpenWeather {
             bail!("No forecast for this day");
         }
 
-        let mut country_full_name = rspns.city.country.as_str();
-        for country in iso_country::data::all() {
-            if rspns.city.country == country.alpha2 {
-                country_full_name = country.name;
-                break;
-            }
-        }
+        let country_full_name = iso_country::data::all()
+            .iter()
+            .find(|code| rspns.city.country == code.alpha2)
+            .map_or(rspns.city.country.as_str(), |code| code.name);
 
         let temp = avrg_by_key(&wthr_that_day, |w| {
             (w.main.temp_min + w.main.temp_max) / 2.0
@@ -69,6 +68,17 @@ impl WeatherProvider for OpenWeather {
             ),
         })
     }
+}
+
+fn avrg_by_key<F, N>(list: &[Forecast], key: F) -> N
+where
+    N: std::iter::Sum<N> + std::ops::Div<Output = N> + From<u16>,
+    F: FnMut(&Forecast) -> N,
+{
+    let sum: N = list.iter().map(key).sum();
+    let len: N = (list.len() as u16).into();
+
+    sum / len
 }
 
 #[derive(Deserialize)]
@@ -101,15 +111,4 @@ struct Main {
 #[derive(Deserialize)]
 struct Wind {
     speed: f32,
-}
-
-fn avrg_by_key<F, N>(list: &[Forecast], key: F) -> N
-where
-    N: std::iter::Sum<N> + std::ops::Div<Output = N> + From<u16>,
-    F: FnMut(&Forecast) -> N,
-{
-    let sum: N = list.iter().map(key).sum();
-    let len: N = (list.len() as u16).into();
-
-    sum / len
 }

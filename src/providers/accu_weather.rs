@@ -1,4 +1,4 @@
-use super::{Weather, WeatherProvider};
+use super::{ProviderHandle, Weather, WeatherProvider};
 use anyhow::{bail, Error, Result};
 use chrono::NaiveDate;
 use reqwest::blocking::Client;
@@ -11,8 +11,11 @@ pub struct AccuWeather {
 }
 
 impl AccuWeather {
-    pub fn new(api_key: String, client: Client) -> Self {
-        Self { api_key, client }
+    pub fn new(config: ProviderHandle) -> Self {
+        Self {
+            api_key: config.api_key,
+            client: config.client,
+        }
     }
 
     fn get_place(&self, address: String) -> Result<Place> {
@@ -20,12 +23,13 @@ impl AccuWeather {
             "https://dataservice.accuweather.com/locations/v1/cities/autocomplete?q={}&apikey={}",
             address, self.api_key
         );
-        let responce: Value = self.client.get(location_url).send()?.json()?;
-        if !responce["Code"].is_null() {
-            bail!("Error {}: {}", responce["Code"], responce["Message"]);
+
+        let rspns: Value = self.client.get(location_url).send()?.json()?;
+        if !rspns["Code"].is_null() {
+            bail!("Error {}: {}", rspns["Code"], rspns["Message"]);
         }
 
-        serde_json::from_value::<Vec<Place>>(responce)
+        serde_json::from_value::<Vec<Place>>(rspns)
             .into_iter()
             .flatten()
             .next()
