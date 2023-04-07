@@ -12,7 +12,7 @@ fn run(cli: Cli, mut config: Config) -> anyhow::Result<()> {
         Command::Configure {
             provider,
             api_key,
-            set_default,
+            default: set_default,
         } => config.configure_provider(provider, api_key, set_default),
         Command::SetDefault { provider } => config.set_default_provider(provider),
         Command::Get {

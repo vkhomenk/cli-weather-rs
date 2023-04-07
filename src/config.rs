@@ -8,6 +8,7 @@ use strum::IntoEnumIterator;
 
 const CONFIG_FILE_PATH: &str = "weather-config.json";
 
+/// Main configuration struct
 #[derive(Serialize, Deserialize, Default)]
 pub struct Config {
     providers: HashMap<String, String>,
@@ -15,19 +16,23 @@ pub struct Config {
 }
 
 impl Config {
+    /// Read configuration from file
     pub fn load() -> Result<Self> {
         let contents = read_to_string(CONFIG_FILE_PATH)?;
         serde_json::from_str(&contents).map_err(Error::msg)
     }
 
+    /// Sets provider, either specified by argument or selected by arrow keys.
+    /// Sets its API key, either specified with --api-key/-k flag, or from prompted input.
+    /// If it's first configuration, or if --default/-d flag is used, sets the provider as default.
     pub fn configure_provider(
         &mut self,
         specified_provider: Option<ProviderKind>,
         specified_api_key: Option<String>,
         set_default: bool,
     ) -> Result<()> {
-        let provider = if let Some(name) = specified_provider {
-            name.to_string()
+        let provider = if let Some(kind) = specified_provider {
+            kind.full_name()
         } else {
             let supported: Vec<_> = ProviderKind::iter().map(|p| p.full_name()).collect();
             select_provider(supported, "Select provider to configure")?
@@ -40,29 +45,29 @@ impl Config {
                 .interact_text()?,
         };
 
-        let no_other_provider = || !self.providers.keys().any(|existing| provider != **existing);
-        if set_default || no_other_provider() {
-            self.default = Some(provider.clone());
-        }
+        self.providers.insert(provider.clone(), api_key);
 
-        self.providers.remove(&provider);
-        self.providers.insert(provider, api_key);
+        let is_first_provider = || !self.providers.keys().any(|existing| provider != **existing);
+        if set_default || is_first_provider() {
+            self.default = Some(provider);
+        }
 
         self.save()
     }
 
-    pub fn set_default_provider(&mut self, specified_name: Option<String>) -> Result<()> {
+    /// Set provider to use by default. If None is passed - asks to select by arrow keys
+    pub fn set_default_provider(&mut self, specified_name: Option<ProviderKind>) -> Result<()> {
         self.default_provider()?;
 
-        let configured_provider = if let Some(provider) = specified_name {
+        let configured_provider = if let Some(kind) = specified_name {
+            let provider = kind.full_name();
             self.get_api_key(&provider)?;
             provider
         } else {
             let configured: Vec<_> = ProviderKind::iter()
-                .map(|p| p.to_string())
+                .map(|p| p.full_name())
                 .filter(|p| self.providers.contains_key(p))
                 .collect();
-
             select_provider(configured, "Select provider to use by default")?
         };
 
@@ -83,21 +88,19 @@ impl Config {
     }
 
     fn save(&self) -> Result<()> {
-        let contents = serde_json::to_string_pretty(&self)?;
+        let contents = serde_json::to_string_pretty(self)?;
         write(CONFIG_FILE_PATH, contents).map_err(Error::msg)
     }
 }
 
 /// Prompts to select provider with arrow keys
-fn select_provider(options: Vec<String>, prompt: &str) -> Result<String> {
+fn select_provider(mut options: Vec<String>, prompt: &str) -> Result<String> {
     let index = Select::new()
         .with_prompt(prompt)
         .items(&options)
         .default(0)
-        .interact()?;
+        .interact()
+        .map_err(Error::msg)?;
 
-    Ok(options
-        .into_iter()
-        .nth(index)
-        .expect("Selection out of bounds"))
+    Ok(options.swap_remove(index))
 }

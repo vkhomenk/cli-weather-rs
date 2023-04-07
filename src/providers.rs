@@ -46,7 +46,7 @@ impl ProviderHandle {
             Some(kind) => kind,
             None => config.default_provider()?.parse()?,
         };
-        let api_key = config.get_api_key(&kind.to_string())?.clone();
+        let api_key = config.get_api_key(&kind.full_name())?.clone();
         let client = Client::builder()
             .user_agent(APP_USER_AGENT)
             .timeout(Duration::from_secs(TIMEOUT_SECONDS))

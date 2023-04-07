@@ -1,8 +1,9 @@
 use anyhow::{Error, Result};
 use chrono::{Datelike, NaiveDate, Utc};
 use clap::{Parser, Subcommand};
+use color_print::cformat;
 use std::{fmt::Display, str::FromStr};
-use strum::EnumIter;
+use strum::{EnumIter, IntoEnumIterator};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -15,7 +16,7 @@ pub struct Cli {
 pub enum Command {
     /// Set up provider and its API key
     Configure {
-        #[command(subcommand)]
+        #[arg(value_parser = parse_provider_kind)]
         provider: Option<ProviderKind>,
 
         /// Specify API key
@@ -24,11 +25,14 @@ pub enum Command {
 
         /// Use this provider by default
         #[arg(long, short = 'd')]
-        set_default: bool,
+        default: bool,
     },
 
     /// Set default provider
-    SetDefault { provider: Option<String> },
+    SetDefault {
+        #[arg(value_parser = parse_provider_kind)]
+        provider: Option<ProviderKind>,
+    },
 
     /// Get weather at specified address
     Get {
@@ -39,7 +43,8 @@ pub enum Command {
         date: Option<NaiveDate>,
 
         /// Specify provider
-        #[arg(long, short = 'p')]
+        // #[command(subcommand)]
+        #[arg(long, short = 'p', value_parser = parse_provider_kind)]
         provider: Option<ProviderKind>,
     },
 }
@@ -84,7 +89,21 @@ impl FromStr for ProviderKind {
     }
 }
 
-fn parse_date(date: &str) -> anyhow::Result<NaiveDate> {
+/// Custom parser for provider options
+fn parse_provider_kind(input: &str) -> Result<ProviderKind> {
+    ProviderKind::iter()
+        .find(|kind| input == kind.to_string())
+        .ok_or_else(|| {
+            let options = ProviderKind::iter()
+                .map(|kind| cformat!("'<g>{}</>'", kind))
+                .collect::<Vec<String>>()
+                .join("|");
+            Error::msg(format!("\ntry: {}", options))
+        })
+}
+
+/// Custom parser for date format
+fn parse_date(date: &str) -> Result<NaiveDate> {
     let current_year = Utc::now().naive_utc().year();
     let full_date = format!("{}.{}", date, current_year);
 

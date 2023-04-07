@@ -54,7 +54,7 @@ impl WeatherProvider for AccuWeather {
         let forecast_list: Vec<Forecast> = serde_json::from_value(rspns["DailyForecasts"].clone())
             .map_err(|_| Error::msg("Undefined weather format"))?;
 
-        let possible_forecast = match &date {
+        let possible_forecast = match date {
             None => forecast_list.first(),
             Some(day) => forecast_list
                 .iter()

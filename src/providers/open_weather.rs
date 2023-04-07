@@ -32,16 +32,19 @@ impl WeatherProvider for OpenWeather {
             bail!(format!("Error {}: {}", rspns["cod"], rspns["message"]))
         }
 
-        let rspns: ResponseData =
-            serde_json::from_value(rspns).map_err(|_| Error::msg("Undefined weather format"))?;
+        let ResponseData {
+            list: mut forecast_list,
+            city: place,
+        } = serde_json::from_value(rspns).map_err(|_| Error::msg("Undefined weather format"))?;
 
-        let wthr_that_day: Vec<Forecast> = match &date {
-            None => rspns.list.into_iter().take(1).collect(),
-            Some(day) => rspns
-                .list
+        let wthr_that_day = if let Some(day) = date {
+            forecast_list
                 .into_iter()
                 .filter(|forecast| forecast.dt_txt.starts_with(&day.to_string()))
-                .collect(),
+                .collect()
+        } else {
+            forecast_list.truncate(1);
+            forecast_list
         };
 
         if wthr_that_day.is_empty() {
@@ -50,8 +53,8 @@ impl WeatherProvider for OpenWeather {
 
         let country_full_name = iso_country::data::all()
             .iter()
-            .find(|code| rspns.city.country == code.alpha2)
-            .map_or(rspns.city.country.as_str(), |code| code.name);
+            .find(|code| place.country == code.alpha2)
+            .map(|code| code.name);
 
         let temp = avrg_by_key(&wthr_that_day, |w| {
             (w.main.temp_min + w.main.temp_max) / 2.0
@@ -62,7 +65,7 @@ impl WeatherProvider for OpenWeather {
 
         Ok(Weather {
             date,
-            place: format!("{}, {}", rspns.city.name, country_full_name),
+            place: format!("{}, {}", place.name, country_full_name.unwrap_or(place.country.as_str())),
             details: format!(
                 "Temperature: {temp:.2}\nFeels like: {temp_feel:.2}\nHumidity: {hmdt}\nWind Speed: {wind:.2}"
             ),
