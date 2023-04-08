@@ -5,6 +5,7 @@ use reqwest::blocking::Client;
 use serde::Deserialize;
 use serde_json::Value;
 
+/// OpenWeather API.
 pub struct OpenWeather {
     api_key: String,
     client: Client,
@@ -17,6 +18,7 @@ impl OpenWeather {
 }
 
 impl WeatherProvider for OpenWeather {
+    /// Request [`Weather`] using automatic geocoding.
     fn get_weather(&self, address: String, date: Option<NaiveDate>) -> Result<Weather> {
         let url = format!(
             "https://api.openweathermap.org/data/2.5/forecast?units=metric&q={}&appid={}",

@@ -8,7 +8,7 @@ use strum::IntoEnumIterator;
 
 const CONFIG_FILE_PATH: &str = "weather-config.json";
 
-/// Main configuration struct
+/// Holds information about configured providers and the name of default one.
 #[derive(Serialize, Deserialize, Default)]
 pub struct Config {
     providers: HashMap<String, String>,
@@ -25,6 +25,10 @@ impl Config {
     /// Sets provider, either specified by argument or selected by arrow keys.
     /// Sets its API key, either specified with --api-key/-k flag, or from prompted input.
     /// If it's first configuration, or if --default/-d flag is used, sets the provider as default.
+    ///
+    /// # Safety
+    ///
+    /// Returns `Err` if interaction in CLI fails.
     pub fn configure_provider(
         &mut self,
         specified_provider: Option<ProviderKind>,
@@ -55,7 +59,11 @@ impl Config {
         self.save()
     }
 
-    /// Set provider to use by default. If None is passed - asks to select by arrow keys
+    /// Set provider to use by default. If `None` is passed - asks to select by arrow keys.
+    ///
+    /// # Safety
+    ///
+    /// Returns `Err` if if the specified provider is not yet configured or if none are.
     pub fn set_default_provider(&mut self, specified_provider: Option<ProviderKind>) -> Result<()> {
         self.default_provider()?;
 
@@ -75,12 +83,22 @@ impl Config {
         self.save()
     }
 
+    /// Gets referance to API key for specified provider.
+    ///
+    /// # Safety
+    ///
+    /// Returns `Err` if API key for specified provider is not configured.
     pub fn get_api_key(&self, provider: &str) -> Result<&String> {
         self.providers
             .get(provider)
             .ok_or(Error::msg("This provider is not configured"))
     }
 
+    /// Gets default provider.
+    ///
+    /// # Safety
+    ///
+    /// Returns `Err` if no provider is configured as default.
     pub fn default_provider(&self) -> Result<&String> {
         self.default
             .as_ref()
@@ -93,7 +111,7 @@ impl Config {
     }
 }
 
-/// Prompts to select provider with arrow keys
+/// Prompts to select provider with arrow keys.
 fn select_provider(mut options: Vec<String>, prompt: &str) -> Result<String> {
     let index = Select::new()
         .with_prompt(prompt)

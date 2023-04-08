@@ -7,6 +7,7 @@ use providers::ProviderHandle;
 
 use clap::Parser;
 
+/// Runs command from CLI.
 fn run(cli: Cli, mut config: Config) -> anyhow::Result<()> {
     match cli.command {
         Command::Configure {

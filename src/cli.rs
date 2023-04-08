@@ -2,7 +2,7 @@ use anyhow::{Error, Result};
 use chrono::{Datelike, NaiveDate, Utc};
 use clap::{Parser, Subcommand};
 use color_print::cformat;
-use std::{fmt::Display, str::FromStr};
+use std::str::FromStr;
 use strum::{EnumIter, IntoEnumIterator};
 
 #[derive(Parser)]
@@ -39,11 +39,10 @@ pub enum Command {
         address: String,
 
         /// Specify date (up to 5 days ahead)
-        #[arg(long, short = 'd', value_parser = parse_date)]
+        #[arg(value_parser = parse_date)]
         date: Option<NaiveDate>,
 
         /// Specify provider
-        // #[command(subcommand)]
         #[arg(long, short = 'p', value_parser = parse_provider_kind)]
         provider: Option<ProviderKind>,
     },
@@ -67,42 +66,42 @@ impl ProviderKind {
     }
 }
 
-impl Display for ProviderKind {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl ToString for ProviderKind {
+    fn to_string(&self) -> String {
         let s = match self {
             Self::Open => "open",
             Self::Accu => "accu",
         };
-        write!(f, "{s}")
+        s.into()
     }
 }
 
 impl FromStr for ProviderKind {
     type Err = Error;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    fn from_str(s: &str) -> Result<Self> {
         match s {
-            "open" => Ok(Self::Open),
-            "accu" => Ok(Self::Accu),
+            "OpenWeather" => Ok(Self::Open),
+            "AccuWeather" => Ok(Self::Accu),
             _ => Err(Error::msg("Unknown provider")),
         }
     }
 }
 
-/// Custom parser for provider options
+/// Custom parser for [`ProviderKind`].
 fn parse_provider_kind(input: &str) -> Result<ProviderKind> {
     ProviderKind::iter()
         .find(|kind| input == kind.to_string())
         .ok_or_else(|| {
             let options = ProviderKind::iter()
-                .map(|kind| cformat!("'<g>{}</>'", kind))
+                .map(|kind| cformat!("'<g>{}</>'", kind.to_string()))
                 .collect::<Vec<String>>()
                 .join("|");
             Error::msg(format!("\ntry: {}", options))
         })
 }
 
-/// Custom parser for date format
+/// Custom parser for date format.
 fn parse_date(date: &str) -> Result<NaiveDate> {
     let current_year = Utc::now().naive_utc().year();
     let full_date = format!("{}.{}", date, current_year);

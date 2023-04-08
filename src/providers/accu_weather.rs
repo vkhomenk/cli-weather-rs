@@ -5,6 +5,7 @@ use reqwest::blocking::Client;
 use serde::Deserialize;
 use serde_json::Value;
 
+/// AccuWeather API.
 pub struct AccuWeather {
     api_key: String,
     client: Client,
@@ -15,6 +16,7 @@ impl AccuWeather {
         Self { api_key, client }
     }
 
+    /// Request location key.
     fn get_place(&self, address: String) -> Result<Place> {
         let location_url = format!(
             "https://dataservice.accuweather.com/locations/v1/cities/autocomplete?q={}&apikey={}",
@@ -35,6 +37,7 @@ impl AccuWeather {
 }
 
 impl WeatherProvider for AccuWeather {
+    /// Request location key and then request [`Weather`]
     fn get_weather(&self, address: String, date: Option<NaiveDate>) -> Result<Weather> {
         let place = self.get_place(address)?;
 
