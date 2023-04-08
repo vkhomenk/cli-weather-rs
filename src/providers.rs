@@ -34,10 +34,9 @@ impl Weather {
 pub trait WeatherProvider {
     fn get_weather(&self, address: String, date: Option<NaiveDate>) -> Result<Weather>;
 }
+
 pub struct ProviderHandle {
-    kind: ProviderKind,
-    api_key: String,
-    client: Client,
+    provider: Box<dyn WeatherProvider>,
 }
 
 impl ProviderHandle {
@@ -53,16 +52,14 @@ impl ProviderHandle {
             .build()?;
 
         Ok(Self {
-            kind,
-            api_key,
-            client,
+            provider: match kind {
+                ProviderKind::Open => Box::new(OpenWeather::new(api_key, client)),
+                ProviderKind::Accu => Box::new(AccuWeather::new(api_key, client)),
+            },
         })
     }
 
     pub fn get_weather(self, address: String, date: Option<NaiveDate>) -> Result<Weather> {
-        match self.kind {
-            ProviderKind::Open => OpenWeather::new(self).get_weather(address, date),
-            ProviderKind::Accu => AccuWeather::new(self).get_weather(address, date),
-        }
+        self.provider.get_weather(address, date)
     }
 }

@@ -1,4 +1,4 @@
-use super::{ProviderHandle, Weather, WeatherProvider};
+use super::{Weather, WeatherProvider};
 use anyhow::{bail, Error, Result};
 use chrono::NaiveDate;
 use reqwest::blocking::Client;
@@ -11,11 +11,8 @@ pub struct OpenWeather {
 }
 
 impl OpenWeather {
-    pub fn new(config: ProviderHandle) -> Self {
-        Self {
-            api_key: config.api_key,
-            client: config.client,
-        }
+    pub fn new(api_key: String, client: Client) -> Self {
+        Self { api_key, client }
     }
 }
 
@@ -37,24 +34,26 @@ impl WeatherProvider for OpenWeather {
             city: place,
         } = serde_json::from_value(rspns).map_err(|_| Error::msg("Undefined weather format"))?;
 
-        let wthr_that_day = if let Some(day) = date {
-            forecast_list
+        let wthr_that_day = match date {
+            Some(day) => forecast_list
                 .into_iter()
                 .filter(|forecast| forecast.dt_txt.starts_with(&day.to_string()))
-                .collect()
-        } else {
-            forecast_list.truncate(1);
-            forecast_list
+                .collect(),
+            None => {
+                forecast_list.truncate(1);
+                forecast_list
+            }
         };
 
         if wthr_that_day.is_empty() {
             bail!("No forecast for this day");
         }
 
-        let country_full_name = iso_country::data::all()
+        let country = iso_country::data::all()
             .iter()
             .find(|code| place.country == code.alpha2)
-            .map(|code| code.name);
+            .map(|code| code.name)
+            .unwrap_or(place.country.as_str());
 
         let temp = avrg_by_key(&wthr_that_day, |w| {
             (w.main.temp_min + w.main.temp_max) / 2.0
@@ -65,7 +64,7 @@ impl WeatherProvider for OpenWeather {
 
         Ok(Weather {
             date,
-            place: format!("{}, {}", place.name, country_full_name.unwrap_or(place.country.as_str())),
+            place: format!("{}, {}", place.name, country),
             details: format!(
                 "Temperature: {temp:.2}\nFeels like: {temp_feel:.2}\nHumidity: {hmdt}\nWind Speed: {wind:.2}"
             ),

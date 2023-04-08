@@ -1,4 +1,4 @@
-use super::{ProviderHandle, Weather, WeatherProvider};
+use super::{Weather, WeatherProvider};
 use anyhow::{bail, Error, Result};
 use chrono::NaiveDate;
 use reqwest::blocking::Client;
@@ -11,11 +11,8 @@ pub struct AccuWeather {
 }
 
 impl AccuWeather {
-    pub fn new(config: ProviderHandle) -> Self {
-        Self {
-            api_key: config.api_key,
-            client: config.client,
-        }
+    pub fn new(api_key: String, client: Client) -> Self {
+        Self { api_key, client }
     }
 
     fn get_place(&self, address: String) -> Result<Place> {

@@ -56,10 +56,10 @@ impl Config {
     }
 
     /// Set provider to use by default. If None is passed - asks to select by arrow keys
-    pub fn set_default_provider(&mut self, specified_name: Option<ProviderKind>) -> Result<()> {
+    pub fn set_default_provider(&mut self, specified_provider: Option<ProviderKind>) -> Result<()> {
         self.default_provider()?;
 
-        let configured_provider = if let Some(kind) = specified_name {
+        let configured_provider = if let Some(kind) = specified_provider {
             let provider = kind.full_name();
             self.get_api_key(&provider)?;
             provider
