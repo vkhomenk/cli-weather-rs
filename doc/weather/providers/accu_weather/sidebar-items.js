@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["AccuWeather","AccuWeather API."],["Country",""],["DataUnit",""],["Day",""],["Forecast",""],["MinMaxData",""],["Place",""],["Wind",""]]};

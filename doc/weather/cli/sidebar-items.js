@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":[["Command",""],["ProviderKind",""]],"fn":[["parse_date","Custom parser for date format."],["parse_provider_kind","Custom parser for [`ProviderKind`]."]],"struct":[["Cli",""],["ProviderKindIter","An iterator over the variants of [Self]"]]};

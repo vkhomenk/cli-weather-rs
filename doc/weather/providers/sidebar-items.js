@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":[["APP_USER_AGENT",""],["TIMEOUT_SECONDS",""]],"mod":[["accu_weather",""],["open_weather",""]],"struct":[["ProviderHandle","Wrapper that generalises different providers"],["Weather","Standart for reporting weather data."]],"trait":[["WeatherProvider",""]]};

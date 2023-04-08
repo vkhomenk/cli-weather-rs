@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":[["CONFIG_FILE_PATH",""]],"fn":[["select_provider","Prompts to select provider with arrow keys."]],"struct":[["Config","Holds information about configured providers and the name of default one."]]};

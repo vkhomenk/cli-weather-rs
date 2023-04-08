@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":[["main",""],["run","Runs command from CLI."]],"mod":[["cli",""],["config",""],["providers",""]]};
