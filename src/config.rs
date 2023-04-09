@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::fs::{read_to_string, write};
 use strum::IntoEnumIterator;
 
-const CONFIG_FILE_PATH: &str = "weather-config.json";
+const CONFIG_FILE_PATH: &str = "provider-config.json";
 
 /// Holds information about configured providers and the name of default one.
 #[derive(Serialize, Deserialize, Default)]
