@@ -22,10 +22,10 @@ pub struct Weather {
 
 impl Weather {
     pub fn print(&self) {
-        let date = self.date.map_or_else(
-            || "right now".to_string(),
-            |day| format!("on {}", day.format("%d.%m")),
-        );
+        let date = match self.date {
+            Some(day) => format!("on {}", day.format("%d.%m")),
+            None => "right now".to_string(),
+        };
 
         println!("Weather in {} {}:\n{}", self.place, date, self.details);
     }
