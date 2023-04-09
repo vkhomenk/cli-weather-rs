@@ -91,7 +91,7 @@ impl Config {
     pub fn get_api_key(&self, provider: &str) -> Result<&String> {
         self.providers
             .get(provider)
-            .ok_or(Error::msg("This provider is not configured"))
+            .ok_or_else(|| Error::msg("This provider is not configured"))
     }
 
     /// Gets default provider.
@@ -102,7 +102,7 @@ impl Config {
     pub fn default_provider(&self) -> Result<&String> {
         self.default
             .as_ref()
-            .ok_or(Error::msg("No providers configured"))
+            .ok_or_else(|| Error::msg("No providers configured"))
     }
 
     fn save(&self) -> Result<()> {

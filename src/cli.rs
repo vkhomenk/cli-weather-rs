@@ -90,21 +90,23 @@ impl FromStr for ProviderKind {
 
 /// Custom parser for [`ProviderKind`].
 fn parse_provider_kind(input: &str) -> Result<ProviderKind> {
+    let error_usage_message = || {
+        let options = ProviderKind::iter()
+            .map(|kind| cformat!("'<g>{}</>'", kind.to_string()))
+            .collect::<Vec<String>>()
+            .join("|");
+        Error::msg(format!("\ntry: {options}"))
+    };
+
     ProviderKind::iter()
         .find(|kind| input == kind.to_string())
-        .ok_or_else(|| {
-            let options = ProviderKind::iter()
-                .map(|kind| cformat!("'<g>{}</>'", kind.to_string()))
-                .collect::<Vec<String>>()
-                .join("|");
-            Error::msg(format!("\ntry: {}", options))
-        })
+        .ok_or_else(error_usage_message)
 }
 
 /// Custom parser for date format.
 fn parse_date(date: &str) -> Result<NaiveDate> {
     let current_year = Utc::now().naive_utc().year();
-    let full_date = format!("{}.{}", date, current_year);
+    let full_date = format!("{date}.{current_year}");
 
     NaiveDate::parse_from_str(&full_date, "%d.%m.%Y")
         .map_err(|_| Error::msg("Accepted date format: day.month"))

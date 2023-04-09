@@ -5,7 +5,7 @@ use reqwest::blocking::Client;
 use serde::Deserialize;
 use serde_json::Value;
 
-/// OpenWeather API.
+/// `OpenWeather` API.
 pub struct OpenWeather {
     api_key: String,
     client: Client,
@@ -36,15 +36,15 @@ impl WeatherProvider for OpenWeather {
             city: place,
         } = serde_json::from_value(rspns).map_err(|_| Error::msg("Undefined weather format"))?;
 
-        let wthr_that_day = match date {
-            Some(day) => forecast_list
-                .into_iter()
-                .filter(|forecast| forecast.dt_txt.starts_with(&day.to_string()))
-                .collect(),
+        let wthr_that_day: Vec<Forecast> = match date {
             None => {
                 forecast_list.truncate(1);
                 forecast_list
             }
+            Some(day) => forecast_list
+                .into_iter()
+                .filter(|forecast| forecast.dt_txt.starts_with(&day.to_string()))
+                .collect(),
         };
 
         if wthr_that_day.is_empty() {
@@ -54,8 +54,7 @@ impl WeatherProvider for OpenWeather {
         let country = iso_country::data::all()
             .iter()
             .find(|code| place.country == code.alpha2)
-            .map(|code| code.name)
-            .unwrap_or(place.country.as_str());
+            .map_or(place.country.as_str(), |code| code.name);
 
         let temp = avrg_by_key(&wthr_that_day, |w| {
             (w.main.temp_min + w.main.temp_max) / 2.0

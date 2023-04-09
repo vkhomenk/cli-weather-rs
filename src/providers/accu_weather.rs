@@ -5,7 +5,7 @@ use reqwest::blocking::Client;
 use serde::Deserialize;
 use serde_json::Value;
 
-/// AccuWeather API.
+/// `AccuWeather` API.
 pub struct AccuWeather {
     api_key: String,
     client: Client,
