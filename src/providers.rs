@@ -1,10 +1,12 @@
 mod accu_weather;
 mod open_weather;
+
 pub use accu_weather::AccuWeather;
 pub use open_weather::OpenWeather;
 
 use crate::cli::ProviderKind;
 use crate::config::Config;
+
 use anyhow::Result;
 use chrono::NaiveDate;
 use reqwest::blocking::Client;

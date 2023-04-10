@@ -1,9 +1,11 @@
 use crate::cli::ProviderKind;
+
+use std::fs::{read_to_string, write};
+use std::collections::HashMap;
+
 use anyhow::{Error, Result};
 use dialoguer::{Input, Select};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::fs::{read_to_string, write};
 use strum::IntoEnumIterator;
 
 const CONFIG_FILE_PATH: &str = "provider-config.json";

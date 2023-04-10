@@ -1,8 +1,9 @@
+use std::str::FromStr;
+
 use anyhow::{Error, Result};
 use chrono::{Datelike, NaiveDate, Utc};
 use clap::{Parser, Subcommand};
 use color_print::cformat;
-use std::str::FromStr;
 use strum::{EnumIter, IntoEnumIterator};
 
 #[derive(Parser)]

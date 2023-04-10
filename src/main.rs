@@ -1,6 +1,10 @@
+//! # weather
+//! 
+
 mod cli;
 mod config;
 mod providers;
+
 use cli::{Cli, Command};
 use config::Config;
 use providers::ProviderHandle;

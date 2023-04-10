@@ -1,3 +1,0 @@
-(function() {var implementors = {
-"weather":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.68.2/core/clone/trait.Clone.html\" title=\"trait core::clone::Clone\">Clone</a> for <a class=\"enum\" href=\"weather/cli/enum.ProviderKind.html\" title=\"enum weather::cli::ProviderKind\">ProviderKind</a>"],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.68.2/core/clone/trait.Clone.html\" title=\"trait core::clone::Clone\">Clone</a> for <a class=\"struct\" href=\"weather/cli/struct.ProviderKindIter.html\" title=\"struct weather::cli::ProviderKindIter\">ProviderKindIter</a>"]]
-};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

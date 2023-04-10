@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":[["avrg_by_key",""]],"struct":[["City",""],["Forecast",""],["Main",""],["OpenWeather","OpenWeather API."],["ResponseData",""],["Wind",""]]};

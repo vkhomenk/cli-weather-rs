@@ -1,4 +1,5 @@
 use super::{Weather, WeatherProvider};
+
 use anyhow::{bail, Error, Result};
 use chrono::NaiveDate;
 use reqwest::blocking::Client;
