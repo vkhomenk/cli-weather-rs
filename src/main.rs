@@ -1,5 +1,8 @@
-//! # weather
+//! CLI weather
 //! 
+//! This programm provides a convenient way to request weather forecast
+//! from a chosen provider. Configure providers by setting API keys, set
+//! which one to use by default and get weather forecast for up to 5 days ahead.
 
 mod cli;
 mod config;
