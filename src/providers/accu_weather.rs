@@ -24,12 +24,17 @@ impl AccuWeather {
             address, self.api_key
         );
 
-        let rspns: Value = self.client.get(location_url).send()?.json()?;
-        if !rspns["Code"].is_null() {
-            bail!("Error {}: {}", rspns["Code"], rspns["Message"]);
+        let rspns = self.client.get(location_url).send()?;
+        if rspns.status() != 200 {
+            bail!(
+                "Error {}: {}",
+                rspns.status(),
+                rspns.json::<Value>()?["Message"]
+            );
         }
 
-        serde_json::from_value::<Vec<Place>>(rspns)
+        rspns
+            .json::<Vec<Place>>()
             .into_iter()
             .flatten()
             .next()
@@ -47,12 +52,19 @@ impl WeatherProvider for AccuWeather {
             place.key, self.api_key
         );
 
-        let rspns: Value = self.client.get(weather_url).send()?.json()?;
-        if !rspns["Code"].is_null() {
-            bail!("Error {}: {}", rspns["Code"], rspns["Message"]);
+        let rspns = self.client.get(weather_url).send()?;
+        if rspns.status() != 200 {
+            bail!(
+                "Error {}: {}",
+                rspns.status(),
+                rspns.json::<Value>()?["Message"]
+            );
         }
 
-        let forecast_list: Vec<Forecast> = serde_json::from_value(rspns["DailyForecasts"].clone())
+        let ResponseData {
+            daily_forecasts: forecast_list,
+        } = rspns
+            .json()
             .map_err(|_| Error::msg("Undefined weather format"))?;
 
         let possible_forecast = match date {
@@ -97,6 +109,11 @@ struct Place {
 #[serde(rename_all = "PascalCase")]
 struct Country {
     localized_name: String,
+}
+#[derive(Deserialize)]
+#[serde(rename_all = "PascalCase")]
+struct ResponseData {
+    daily_forecasts: Vec<Forecast>,
 }
 
 #[derive(Deserialize)]
