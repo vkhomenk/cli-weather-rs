@@ -26,18 +26,23 @@ impl WeatherProvider for OpenWeather {
             address, self.api_key
         );
 
-        let rspns: Value = self.client.get(url).send()?.json()?;
-
-        if rspns["cod"] != "200" {
-            bail!(format!("Error {}: {}", rspns["cod"], rspns["message"]))
+        let rspns = self.client.get(url).send()?;
+        if rspns.status() != 200 {
+            bail!(format!(
+                "Error {}: {}",
+                rspns.status(),
+                rspns.json::<Value>()?["message"]
+            ));
         }
 
         let ResponseData {
             list: mut forecast_list,
             city: place,
-        } = serde_json::from_value(rspns).map_err(|_| Error::msg("Undefined weather format"))?;
+        } = rspns
+            .json()
+            .map_err(|_| Error::msg("Undefined weather format"))?;
 
-        let wthr_that_day: Vec<Forecast> = match date {
+        let wthr_that_day = match date {
             None => {
                 forecast_list.truncate(1);
                 forecast_list
